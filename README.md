@@ -1,64 +1,127 @@
-# Mental Health & Substance Use Analysis in Canada
+# Mental Health & Substance Use Hospitalization Analysis (Canada & Ontario)
 
-## Project Objective
+## Objective
 
-This project investigates hospitalization and emergency department (ED) visit trends related to mental health and substance use across Canada and Ontario. The goal is to identify high-risk regions using public datasets and to inform healthcare resource planning and policy intervention strategies.
+Mental health and substance-use–related emergencies have been rising across Canada, particularly in Ontario. As someone who regularly witnesses these challenges in downtown communities, I wanted to explore:
 
-## Datasets Used
+- What factors contribute to higher hospitalization or ED visit rates?
+- Are some regions at disproportionately higher risk?
+- Can we quantify and map these risks to guide targeted interventions?
 
-- **CIHI Mental Health Hospitalizations** (2017–2023)
-- **CIHI Workforce Availability** (2019–2023)
-- **PHO ED Visits by PHU** (2014–2024)
-- **Provider Density by PHU** (2025)
-- **ON-Marg Deprivation Index** (2021)
+Using a multi-source public dataset approach, this project analyzes provincial and PHU-level disparities, trends in ED visits, mental health workforce availability, socioeconomic deprivation, and mortality patterns related to substance use.
 
-## Key Analyses
+---
 
-1. **Crude Rate Trends (2017–2023):**  
-   Analyzed mental health hospitalization rates by province.
+## 🗂Datasets Used
 
-2. **Workforce Correlation Analysis:**  
-   Investigated the relationship between psychologist availability and hospitalization rates using Pearson and Spearman correlation, with and without log transformation.
+| Dataset Name                                | Source                    | Description |
+|---------------------------------------------|----------------------------|-------------|
+| `cihi_hospitalization_prov_year_2017_2023`  | CIHI                      | Annual MH hospitalizations by province |
+| `cihi_workforce_prov_year_2019_2023`        | CIHI                      | Psychologist counts per province |
+| `pho_ed_visits_phu_month_2014_2024`         | Public Health Ontario     | Monthly substance-use ED visits per PHU |
+| `onmarg_phu_static_2021`                    | Ontario Marginalization Index | Deprivation scores by PHU |
+| `provider_density_phu_2025_long`            | Compiled from Public PHU data | Number of facilities per 10,000 residents in each PHU |
 
-3. **Opioid ED Visit Trends (2014–2024):**  
-   Assessed monthly opioid-related ED visits by PHU.
+All datasets were cleaned and harmonized for matching temporal and geographic resolution.
 
-4. **Socioeconomic Disparities:**  
-   Modeled the effect of material deprivation on substance-related ED visits using ON-Marg indices and linear regression.
+---
 
-5. **Substance Use Mortality Trends:**  
-   Explored death rates by substance type (opioid, stimulant, benzodiazepine) and regional differences.
+## Methodology
 
-6. **Composite Risk Score Mapping:**  
-   Combined ED rates, deprivation index, and provider shortage into a single risk index to prioritize PHUs for intervention.
+### 1. Crude Hospitalization Rate Trends (Analysis 1)
+- Calculated crude rate = `(hospitalizations / population) * 100,000`
+- Used line plots to visualize province-level trends (2017–2023)
+- Identified provinces with persistently high MH hospitalization burden
 
-## Methods & Tools
+### 2. Workforce vs. Hospitalization Rate Correlation (Analysis 2)
+- Merged hospitalization and psychologist data by province-year
+- Used **Pearson** and **Spearman** correlation, with and without **log transformation**
+- Regression modeling was run on 34 province-year data points (a limitation explained in notes)
+- Outliers controlled via scatterplot review and log scaling
 
-- **Languages:** Python (Pandas, NumPy, Seaborn, Scikit-learn, Statsmodels)
-- **Visualization:** Matplotlib, Seaborn, Plotly
-- **Data Cleaning & Merging:** Custom scripts with robust error handling
-- **Statistical Models:** Correlation, Regression, Z-score normalization, Risk Index formulation
+### 3. ED Visit Trends – Opioid Related (Analysis 3)
+- Aggregated monthly ED visits by PHU
+- Created rolling averages to smooth spikes
+- Highlighted sharp increase in opioid-related ED visits post-2017
+- Visualized high-burden PHUs like Sudbury and Thunder Bay
 
-## Insights & Recommendations
+### 4. Socioeconomic Disparity & ED Burden (Analysis 4)
+- Merged ON-Marg deprivation index with PHU ED data
+- Linear regression tested the relationship between **material deprivation** and average ED burden
+- Controlled for multicollinearity and residual skewness
+- Emphasized how structural disadvantage predicts ED reliance
 
-- Provinces with lower mental health workforce tend to have higher hospitalization rates.
-- Opioid-related ED visits surged post-2018, with high burden in Northern Ontario PHUs.
-- PHUs with high deprivation and low provider access require urgent support.
-- Created a composite risk index to assist policy-makers in resource targeting.
+### 5. Substance Use Deaths by Substance Type (Analysis 5)
+- Examined trends in mortality by opioids, stimulants, benzos, and combinations
+- Identified rising deaths due to **polysubstance abuse**, especially **benzo + opioid** (benzo-dope)
+- Highlighted regional variation (Northern PHUs hit hardest)
 
-## Error Checking & Validation
+### 6. Composite Risk Index (Analysis 6)
+- Normalized three indicators:
+  - Avg. opioid-related ED rate (high = high risk)
+  - Material deprivation (high = high risk)
+  - Facility access per 10K (low = high risk)
+- Final Risk Score =  
+  `normalized_ED_rate + deprivation_score + (1 - normalized_facility_density)`
+- Top 5 PHUs flagged for urgent intervention
+- Created bar plots instead of maps to visualize PHU-level risk ranking
 
-All datasets were cleaned for missing values, suppressed data flags were handled, and results were validated through exploratory analysis and AIC/BIC diagnostics for models.
+---
 
-## How to Run
+## Tools & Technologies
+
+- **Languages**: Python (Pandas, NumPy, Matplotlib, Seaborn, Statsmodels)
+- **Notebook Environment**: Jupyter
+- **Visualizations**: Matplotlib, Seaborn, Plotly
+- **Data Transformation**: Merge, Aggregation, Normalization, Rolling Averages
+- **Statistical Models**: Linear Regression, Pearson/Spearman correlation, Composite Index
+- **File Handling**: CSV, long-format merging, temporal joins
+
+---
+
+## Challenges Encountered & Fixes
+
+| Issue | Resolution |
+|-------|------------|
+| Inconsistent formats (wide vs. long) | Standardized to long format, reshaped with `pd.melt()` and `groupby()` |
+| Suppressed values in PHO data | Dropped or imputed with rolling mean for time series smoothness |
+| Different geographic identifiers (e.g., HUID vs PHU name) | Used manual mapping between HUID and PHU |
+| Small N in regression (~34 points) | Acknowledged in limitations; used log transformation and visualization to reduce outlier impact |
+| Missing facility counts | Manually scraped and validated through official regional sources |
+
+---
+
+## Results Summary
+
+| Key Finding | Insight |
+|-------------|---------|
+| **High hospitalization rates** | Provinces like Saskatchewan and Manitoba had consistently high MH hospitalization rates (crude rate > 500) |
+| **Workforce shortage link** | Provinces with lower psychologist availability tended to show higher hospitalization rates |
+| **Opioid ED burden** | Opioid-related ED visits have steadily risen in most PHUs since 2017 |
+| **Disparity impact** | Higher deprivation PHUs showed significantly higher substance-use ED burdens |
+| **Hotspot PHUs** | Sudbury, Thunder Bay, Timiskaming flagged with highest composite risk index |
+
+---
+
+## Recommendations
+
+- **Invest in workforce**: Scale psychologist coverage, especially in high-burden provinces
+- **Expand harm reduction services**: Especially in Northern Ontario
+- **Targeted resource allocation**: Use composite risk index to drive policy prioritization
+- **Enhance data collection**: Address suppressed or missing data to enable better predictive models
+
+---
+
+##  How to Run This Project
 
 ```bash
 # Create a virtual environment
 python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
+source venv/Scripts/activate  # or venv/bin/activate (Mac/Linux)
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Run scripts or notebooks
+# Launch Jupyter
 jupyter notebook
+
