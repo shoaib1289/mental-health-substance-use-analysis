@@ -12,7 +12,7 @@ Using a multi-source public dataset approach, this project analyzes provincial a
 
 ---
 
-## 🗂Datasets Used
+## Datasets Used
 
 | Dataset Name                                | Source                    | Description |
 |---------------------------------------------|----------------------------|-------------|
